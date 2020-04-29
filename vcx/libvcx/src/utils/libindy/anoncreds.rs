@@ -521,7 +521,7 @@ pub fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, Strin
         .and_then(|response| libindy_parse_get_revoc_reg_response(&response))
 }
 
-pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<(Option<PaymentTxn>, String)> {
+pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str, publish: bool) -> VcxResult<(Option<PaymentTxn>, String)> {
     if settings::indy_mocks_enabled() {
         let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
         let outputs = serde_json::from_str::<Vec<::utils::libindy::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
@@ -531,7 +531,12 @@ pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) 
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     let delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
-    let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
+    
+    let payment = match publish {
+        true => publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?.0,
+        false => None
+    };
+    // let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
 
     Ok((payment, delta))
 }
@@ -1056,7 +1061,7 @@ pub mod tests {
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        let (payment, _revoked_rev_reg_delta) = revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
+        let (payment, _revoked_rev_reg_delta) = revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str(), true).unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();

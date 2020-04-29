@@ -481,7 +481,7 @@ impl IssuerCredential {
         })
     }
 
-    fn revoke_cred(&mut self) -> VcxResult<()> {
+    fn revoke_cred(&mut self, publish: bool) -> VcxResult<()> {
         let tails_file = self.tails_file
             .as_ref()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationInfo: `tails_file` field not found"))?;
@@ -494,7 +494,7 @@ impl IssuerCredential {
             .as_ref()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationInfo: `cred_rev_id` field not found"))?;
 
-        let (payment, _) = anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
+        let (payment, _) = anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id, publish)?;
 
         self.rev_cred_payment_txn = payment;
         Ok(())
@@ -810,11 +810,22 @@ pub fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
 pub fn revoke_credential(handle: u32) -> VcxResult<()> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |obj| {
         match obj {
-            IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(),
-            IssuerCredentials::V1(ref mut obj) => obj.revoke_cred(),
-            IssuerCredentials::V3(ref mut obj) => obj.revoke_credential()
+            IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(true),
+            IssuerCredentials::V1(ref mut obj) => obj.revoke_cred(true),
+            IssuerCredentials::V3(ref mut obj) => obj.revoke_credential(true)
         }
     })
+}
+
+pub fn revoke_credential_without_publish(handle: u32) -> VcxResult<()> {
+    ISSUER_CREDENTIAL_MAP.get_mut(handle, |obj| {
+        match obj {
+            IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(false),
+            IssuerCredentials::V1(ref mut obj) => obj.revoke_cred(false),
+            IssuerCredentials::V3(ref mut obj) => obj.revoke_credential(false)
+        }
+    })
+
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {

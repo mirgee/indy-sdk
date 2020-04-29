@@ -40,11 +40,11 @@ impl IssuerSM {
         }
     }
 
-    pub fn revoke(&self) -> VcxResult<()> {
+    pub fn revoke(&self, publish: bool) -> VcxResult<()> {
         match &self.state {
             IssuerState::Finished(state) => {
                 if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&state.cred_rev_id, &state.rev_reg_id, &state.tails_file) {
-                    revoke_credential(&tails_file, &rev_reg_id, &cred_rev_id)?;
+                    revoke_credential(&tails_file, &rev_reg_id, &cred_rev_id, publish)?;
                     Ok(())
                 } else {
                     Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails))
