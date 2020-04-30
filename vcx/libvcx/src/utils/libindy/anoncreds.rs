@@ -7,6 +7,7 @@ use time;
 use settings;
 use utils::constants::{LIBINDY_CRED_OFFER, REQUESTED_ATTRIBUTES, PROOF_REQUESTED_PREDICATES, ATTRS, REV_STATE_JSON};
 use utils::libindy::{wallet::get_wallet_handle, LibindyMock};
+use utils::libindy::cache::{get_rev_reg_delta_cache, set_rev_reg_delta_cache, clear_rev_reg_delta_cache};
 use utils::libindy::payments::{pay_for_txn, PaymentTxn};
 use utils::libindy::ledger::*;
 use utils::constants::{SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, REVOC_REG_TYPE, rev_def_json, REV_REG_ID, REV_REG_DELTA_JSON, REV_REG_JSON};
@@ -277,6 +278,12 @@ pub fn libindy_issuer_revoke_credential(tails_file: &str, rev_reg_id: &str, cred
         .map_err(VcxError::from)
 }
 
+pub fn libindy_issuer_merge_revocation_registry_deltas(old_delta: &str, new_delta: &str) -> VcxResult<String> {
+    anoncreds::issuer_merge_revocation_registry_deltas(old_delta, new_delta)
+        .wait()
+        .map_err(VcxError::from)
+}
+
 pub fn libindy_build_revoc_reg_def_request(submitter_did: &str,
                                            rev_reg_def_json: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok("".to_string()); }
@@ -531,14 +538,31 @@ pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str, 
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     let delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
-    
-    let payment = match publish {
-        true => publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?.0,
-        false => None
-    };
-    // let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
+    let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
 
     Ok((payment, delta))
+}
+
+pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<String> {
+    if settings::indy_mocks_enabled() {
+        return Ok(REV_REG_DELTA_JSON.to_string());
+    };
+
+    let mut new_delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
+    if let Some(old_delta) = get_rev_reg_delta_cache(rev_reg_id) {
+        new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str())?;
+        // TODO: Error handling for saving
+        set_rev_reg_delta_cache(rev_reg_id, &new_delta);
+    }
+
+    Ok(new_delta)
+}
+
+pub fn publish_local_revocations(rev_reg_id: &str)
+                                 -> VcxResult<(Option<PaymentTxn>, String)> {
+    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let delta = String::from(clear_rev_reg_delta_cache(rev_reg_id)?);
+    publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)
 }
 
 pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
