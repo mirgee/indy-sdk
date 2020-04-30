@@ -8,7 +8,7 @@ use v3::messages::issuance::credential::Credential;
 use v3::messages::error::ProblemReport;
 use v3::messages::mime_type::MimeType;
 use error::{VcxResult, VcxError, VcxErrorKind};
-use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer, revoke_credential};
+use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer, revoke_credential, revoke_credential_local};
 use issuer_credential::encode_attributes;
 use v3::messages::status::Status;
 use std::collections::HashMap;
@@ -44,7 +44,11 @@ impl IssuerSM {
         match &self.state {
             IssuerState::Finished(state) => {
                 if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&state.cred_rev_id, &state.rev_reg_id, &state.tails_file) {
-                    revoke_credential(&tails_file, &rev_reg_id, &cred_rev_id, publish)?;
+                    if publish {
+                        revoke_credential(&tails_file, &rev_reg_id, &cred_rev_id)?;
+                    } else {
+                        revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)?;
+                    }
                     Ok(())
                 } else {
                     Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails))
