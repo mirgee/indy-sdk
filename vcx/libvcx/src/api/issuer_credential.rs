@@ -792,7 +792,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_issuer_revoke_credential_without_publication(command_handle: CommandHandle,
+pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
                                                                credential_handle: u32,
                                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -802,11 +802,11 @@ pub extern fn vcx_issuer_revoke_credential_without_publication(command_handle: C
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    info!("vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}) source_id: {}",
+    info!("vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
     spawn(move || {
-        let err = match issuer_credential::revoke_credential_without_publish(credential_handle) {
+        let err = match issuer_credential::revoke_credential_local(credential_handle) {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, error::SUCCESS.message, source_id);

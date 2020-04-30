@@ -432,11 +432,11 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
     }
   }
 
-  public async revokeCredentialWithoutPublication (): Promise<void> {
+  public async revokeCredentialLocal (): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_revoke_credential_without_publication(0, this.handle, cb)
+          const rc = rustAPI().vcx_issuer_revoke_credential_local(0, this.handle, cb)
           if (rc) {
             reject(rc)
           }

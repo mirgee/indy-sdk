@@ -494,9 +494,13 @@ impl IssuerCredential {
             .as_ref()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationInfo: `cred_rev_id` field not found"))?;
 
-        let (payment, _) = anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id, publish)?;
+        if publish {
+            let (payment, _) = anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
+            self.rev_cred_payment_txn = payment;
+        } else {
+            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id)?;
+        };
 
-        self.rev_cred_payment_txn = payment;
         Ok(())
     }
 
@@ -817,7 +821,7 @@ pub fn revoke_credential(handle: u32) -> VcxResult<()> {
     })
 }
 
-pub fn revoke_credential_without_publish(handle: u32) -> VcxResult<()> {
+pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |obj| {
         match obj {
             IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(false),

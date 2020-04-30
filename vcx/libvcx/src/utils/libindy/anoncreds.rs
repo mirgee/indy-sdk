@@ -528,7 +528,7 @@ pub fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, Strin
         .and_then(|response| libindy_parse_get_revoc_reg_response(&response))
 }
 
-pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str, publish: bool) -> VcxResult<(Option<PaymentTxn>, String)> {
+pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<(Option<PaymentTxn>, String)> {
     if settings::indy_mocks_enabled() {
         let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
         let outputs = serde_json::from_str::<Vec<::utils::libindy::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
@@ -543,11 +543,7 @@ pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str, 
     Ok((payment, delta))
 }
 
-pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(REV_REG_DELTA_JSON.to_string());
-    };
-
+pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
     let mut new_delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
     if let Some(old_delta) = get_rev_reg_delta_cache(rev_reg_id) {
         new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str())?;
@@ -555,7 +551,7 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
         set_rev_reg_delta_cache(rev_reg_id, &new_delta);
     }
 
-    Ok(new_delta)
+    Ok(())
 }
 
 pub fn publish_local_revocations(rev_reg_id: &str)
