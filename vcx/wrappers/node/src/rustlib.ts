@@ -223,6 +223,7 @@ export interface IFFIEntryPoint {
   vcx_credentialdef_get_payment_txn: (commandId: number, handle: number, cb: any) => number,
   vcx_credentialdef_update_state: (commandId: number, handle: number, cb: any) => number,
   vcx_credentialdef_get_state: (commandId: number, handle: number, cb: any) => number,
+  vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: any) => number,
 
   // schema
   vcx_schema_get_attributes: (commandId: number, sourceId: string, schemaId: string, cb: any) => number,
@@ -420,6 +421,7 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_credentialdef_get_payment_txn: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
   vcx_credentialdef_update_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
   vcx_credentialdef_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
+  vcx_credentialdef_publish_revocations: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
 
   // logger
   vcx_set_default_logger: [FFI_ERROR_CODE, [FFI_STRING]],
