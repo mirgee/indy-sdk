@@ -104,11 +104,15 @@ pub fn set_rev_reg_cache(rev_reg_id: &str, cache: &RevRegCache) {
 /// # Returns
 /// Revocation registry delta json as a string
 pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
+    debug!("Getting rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
+
     let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
     match get_record(CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()) {
         Ok(json) => {
+            debug!("Got JSON record {}", &json);
             match serde_json::from_str(&json)
                 .and_then(|x: serde_json::Value| {
+                    debug!("Got value {}", &x);
                     serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))
                 })
                 {
@@ -135,8 +139,10 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
 /// `cache`: Cache object.
 ///
 pub fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) {
+    debug!("Setting rev_reg_delta_cache for rev_reg_id {}, cache {}", rev_reg_id, cache);
     match serde_json::to_string(cache) {
         Ok(json) => {
+            debug!("JSON fine");
             let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
             let result = update_record_value(CACHE_TYPE, &wallet_id, &json)
                 .or(add_record(CACHE_TYPE, &wallet_id, &json, None));
@@ -160,10 +166,13 @@ pub fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) {
 /// `cache`: Cache object.
 ///
 pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
+    debug!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
     if let Some(last_delta) = get_rev_reg_delta_cache(rev_reg_id) {
+        debug!("Got last delta = {}", last_delta);
         delete_record(CACHE_TYPE, rev_reg_id)?;
         Ok(last_delta)
     } else {
+        debug!("Got error");
         Err(VcxError::from(VcxErrorKind::IOError))
     }
 }
