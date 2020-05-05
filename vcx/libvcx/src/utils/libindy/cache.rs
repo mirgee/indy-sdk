@@ -169,7 +169,9 @@ pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
     debug!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
     if let Some(last_delta) = get_rev_reg_delta_cache(rev_reg_id) {
         debug!("Got last delta = {}", last_delta);
-        delete_record(CACHE_TYPE, rev_reg_id)?;
+        let wallet_id = format!("{}{}", REV_REG_CACHE_PREFIX, rev_reg_id);
+        delete_record(CACHE_TYPE, &wallet_id)?;
+        debug!("DELETED RECORD");
         Ok(last_delta)
     } else {
         debug!("Got error");

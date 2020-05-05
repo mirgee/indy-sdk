@@ -377,7 +377,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  public async publishLocalRevocations (): Promise<void> {
+  public async publishRevocations (): Promise<void> {
     try {
       await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {

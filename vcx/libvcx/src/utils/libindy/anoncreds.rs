@@ -547,9 +547,9 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
     let mut new_delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
     if let Some(old_delta) = get_rev_reg_delta_cache(rev_reg_id) {
         new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str())?;
-        // TODO: Error handling for saving
-        set_rev_reg_delta_cache(rev_reg_id, &new_delta);
     }
+    // TODO: Error handling for saving
+    set_rev_reg_delta_cache(rev_reg_id, &new_delta);
 
     Ok(())
 }
@@ -557,8 +557,12 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
 pub fn publish_local_revocations(rev_reg_id: &str)
                                  -> VcxResult<(Option<PaymentTxn>, String)> {
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-    let delta = String::from(clear_rev_reg_delta_cache(rev_reg_id)?);
-    publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)
+    // let delta = get_rev_reg_delta_cache(rev_reg_id);
+    if let Some(delta) = get_rev_reg_delta_cache(rev_reg_id) {
+        Ok(publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?)
+    } else {
+        Err(VcxError::from(VcxErrorKind::CredDefPublishRevocations))
+    }
 }
 
 pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
