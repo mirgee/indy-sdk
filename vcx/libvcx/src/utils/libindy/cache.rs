@@ -109,13 +109,9 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
     let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
     match get_record(CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()) {
         Ok(json) => {
-            debug!("Got JSON record {}", &json);
             match serde_json::from_str(&json)
-                .and_then(|x: serde_json::Value| {
-                    debug!("Got value {}", &x);
-                    serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))
-                })
-                {
+                .and_then(|x: serde_json::Value| 
+                    serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))) {
                 Ok(cache) => cache,
                 Err(err) => {
                     warn!("Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: {}", rev_reg_id, json, err);
@@ -138,20 +134,19 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
 ///
-pub fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) {
+pub fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) -> VcxResult<()> {
     debug!("Setting rev_reg_delta_cache for rev_reg_id {}, cache {}", rev_reg_id, cache);
     match serde_json::to_string(cache) {
         Ok(json) => {
-            debug!("JSON fine");
             let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
-            let result = update_record_value(CACHE_TYPE, &wallet_id, &json)
-                .or(add_record(CACHE_TYPE, &wallet_id, &json, None));
-            if result.is_err() {
-                warn!("Error when saving rev_reg_delta cache {:?}, error: {:?}", cache, result);
-            }
+            match update_record_value(CACHE_TYPE, &wallet_id, &json)
+                .or(add_record(CACHE_TYPE, &wallet_id, &json, None)) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(err)
+                }
         },
-        Err(err) => {
-            warn!("Unable to convert to JSON rev_reg_delta cache {:?}, error: {:?}", cache, err);
+        Err(_) => {
+            Err(VcxError::from(VcxErrorKind::SerializationError))
         }
     }
 }
@@ -169,12 +164,11 @@ pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
     debug!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
     if let Some(last_delta) = get_rev_reg_delta_cache(rev_reg_id) {
         debug!("Got last delta = {}", last_delta);
-        let wallet_id = format!("{}{}", REV_REG_CACHE_PREFIX, rev_reg_id);
+        let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
         delete_record(CACHE_TYPE, &wallet_id)?;
-        debug!("DELETED RECORD");
+        debug!("Record with id {} deleted", wallet_id);
         Ok(last_delta)
     } else {
-        debug!("Got error");
         Err(VcxError::from(VcxErrorKind::IOError))
     }
 }

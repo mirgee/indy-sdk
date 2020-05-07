@@ -74,8 +74,8 @@ pub enum VcxErrorKind {
     CredDefAlreadyCreated,
     #[fail(display = "Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[fail(display = "Call to publish local revocations failed")]
-    CredDefPublishRevocations,
+    #[fail(display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    RevDeltaNotFound,
 
     // Revocation
     #[fail(display = "Failed to create Revocation Registration Definition")]
@@ -383,7 +383,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::Common(num) => num,
             VcxErrorKind::LibndyError(num) => num,
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
-            VcxErrorKind::CredDefPublishRevocations => error::PUBLISH_REVOCATIONS_ERROR.code_num,
+            VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
         }
     }
 }

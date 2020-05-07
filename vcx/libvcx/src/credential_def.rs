@@ -248,7 +248,7 @@ pub fn publish_revocations(handle: u32) -> VcxResult<()> {
         anoncreds::publish_local_revocations(rev_reg_id.as_str())?;
         Ok(())
     } else {
-        Err(VcxError::from(VcxErrorKind::CredDefPublishRevocations))
+        Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle))
     }
 }
 
