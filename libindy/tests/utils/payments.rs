@@ -1,10 +1,10 @@
 extern crate futures;
-extern crate indy_sys;
+extern crate indy_sys_test;
 
 use indy::{IndyError, ErrorCode};
 use indy::payments;
 use self::futures::Future;
-use self::indy_sys::payments as payments_sys;
+use self::indy_sys_test::payments as payments_sys;
 
 use std::collections::VecDeque;
 use std::ffi::CString;

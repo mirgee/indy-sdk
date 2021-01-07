@@ -29,7 +29,7 @@ serde_derive = "1.0.97"
 
 [dev-dependencies]
 dirs = "1.0.4"
-indy = { version="1.15.0", path="../wrappers/rust" }
+indy-test = { version="1.15.0", path="../wrappers/rust" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

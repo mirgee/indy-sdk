@@ -1,6 +1,6 @@
-extern crate indy_sys;
+extern crate indy_sys_test;
 
-use self::indy_sys::{Error as ErrorCode};
+use self::indy_sys_test::{Error as ErrorCode};
 
 use indy::{WalletHandle, CommandHandle};
 

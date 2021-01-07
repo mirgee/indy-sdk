@@ -6,7 +6,7 @@ inject_indy_dependencies!();
 extern crate indyrs as indy;
 extern crate indyrs as api;
 extern crate core;
-extern crate indy_sys;
+extern crate indy_sys_test;
 
 use crate::utils::{wallet, anoncreds, blob_storage, pool, ledger, did};
 use crate::utils::anoncreds::{COMMON_MASTER_SECRET, CREDENTIAL1_ID};

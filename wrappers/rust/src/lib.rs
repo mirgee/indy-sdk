@@ -12,7 +12,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-extern crate indy_sys as ffi;
+extern crate indy_sys_test as ffi;
 
 #[macro_use]
 mod macros;
@@ -31,7 +31,7 @@ pub mod pairwise;
 pub mod pool;
 pub mod wallet;
 pub mod cache;
-pub mod metrics;
+// pub mod metrics;
 mod utils;
 
 use std::ffi::CString;

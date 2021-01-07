@@ -5,7 +5,7 @@ inject_indy_dependencies!();
 
 extern crate indyrs as indy;
 extern crate indyrs as api;
-extern crate indy_sys;
+extern crate indy_sys_test;
 
 #[cfg(feature = "local_nodes_pool")]
 use crate::utils::callback;
@@ -23,7 +23,7 @@ use crate::utils::environment;
 use crate::utils::Setup;
 
 use self::indy::ErrorCode;
-use self::indy_sys::*;
+use self::indy_sys_test::*;
 
 use std::ptr::null;
 use std::ffi::CString;

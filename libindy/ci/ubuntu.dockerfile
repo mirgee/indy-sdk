@@ -65,8 +65,10 @@ USER indy
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.46.0
 ENV PATH /home/indy/.cargo/bin:$PATH
 
-RUN cargo install cargo-deb
+RUN cargo install cargo-deb cargo-release
 
 EXPOSE 8080
 
 WORKDIR /home/indy
+
+COPY --chown=indy:indy . indy-sdk

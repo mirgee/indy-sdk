@@ -1,7 +1,7 @@
-extern crate indy_sys;
+extern crate indy_sys_test;
 extern crate indyrs;
 
-use self::indy_sys::Error;
+use self::indy_sys_test::Error;
 use self::indyrs::ErrorCode;
 
 use std::sync::mpsc::Receiver;

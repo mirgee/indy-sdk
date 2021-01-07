@@ -1,0 +1,116 @@
+# TODO: hashFiles doesn't work here for some reason, I suppose GA bug
+name: 'Setup environment variables for the workflow'
+
+outputs:
+  CACHE_KEY_POOL: 
+    value: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
+  CACHE_KEY_LIBINDY: 
+    value: ${{ steps.mainstep.outputs.CACHE_KEY_LIBINDY }}
+  CACHE_KEY_ANDROID:
+    value: ${{ steps.mainstep.outputs.CACHE_KEY_ANDROID }}
+  CACHE_KEY_WRAPPERS_BASE: 
+    value: ${{ steps.mainstep.outputs.CACHE_KEY_WRAPPERS_BASE }}
+  DOCKER_IMG_NAME_POOL: 
+    value: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
+  DOCKER_IMG_NAME_LIBINDY: 
+    value: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBINDY }}
+  DOCKER_IMG_NAME_WRAPPER_BASE: 
+    value: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_WRAPPER_BASE }}
+  DOCKER_IMG_NAME_ANDROID: 
+    value: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ANDROID }}
+  PUBLISH_VERSION: 
+    value: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
+  RELEASE: 
+    value: ${{ steps.mainstep.outputs.RELEASE }}
+  PRERELEASE: 
+    value: ${{ steps.mainstep.outputs.PRERELEASE }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build, run android wrapper tests, and publish artifacts
+      id: mainstep
+      run: |
+        if [[ -z "$GITHUB_HEAD_REF" ]]; then # is set only if pipeline run is triggered as pull request
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Push"
+        else
+          BRANCH_NAME=$GITHUB_HEAD_REF
+          echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
+        fi
+
+        BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "PR Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
+
+          REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
+          REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
+          echo "This is pull request from $REPO_HEAD to $REPO_BASE"
+
+          if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]; then
+            echo "This CI run is PR from non-forked repository."
+            IS_FORK="false";
+          else
+            echo "This is fork."
+            IS_FORK="true";
+          fi;
+        else
+          echo "Not PR so this is not fork."
+          IS_FORK="false";
+        fi;
+
+        REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
+        REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libindy/Cargo.toml | cut -d# -f2 | cut -d: -f2)
+        echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in libindy/Cargo.toml) is $REPO_VERSION_DESIRED"
+
+        RELEASE="false"
+        PRERELEASE="false"
+
+        if [[ "$IS_FORK" == "false" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]; then
+              PRERELEASE="true"
+            fi;
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            if [[ "$BRANCH_NAME" == "master" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
+              PUBLISH_VERSION="$REPO_VERSION_DESIRED"
+              RELEASE="true"
+              echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
+            fi;
+          fi;
+
+          if [[ -z "$PUBLISH_VERSION" ]]; then
+            PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-gadev-${{ github.run_number }}" 
+          fi;
+
+          echo "CI will publish artifacts at version: $PUBLISH_VERSION"
+        else
+          echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
+          PUBLISH_VERSION=""
+        fi;
+
+        LIBINDY_SOURCE_HASH=${{ hashFiles('libindy') }}
+        LIBNULLPAY_SOURCE_HASH=${{ hashFiles('libnullpay') }}
+        POSTGRES_SOURCE_HASH=${{ hashFiles('experimental/plugins/postgres') }}
+        LIBINDY_DOCKERFILE_HASH=${{ hashFiles('ci/libindy.dockerfile') }}
+        JAVA_WRAPPER_HASH=${{ hashFiles('wrappers/java') }}
+
+        CACHE_KEY_POOL=${{ hashFiles('ci/indy-pool.dockerfile') }}
+        CACHE_KEY_LIBINDY=${LIBINDY_SOURCE_HASH:0:11}-${LIBNULLPAY_SOURCE_HASH:0:11}-${POSTGRES_SOURCE_HASH:0:11}-${LIBINDY_DOCKERFILE_HASH:0:11}
+        CACHE_KEY_ANDROID=${LIBINDY_SOURCE_HASH:0:21}-${JAVA_WRAPPER_HASH:0:21}-${ANDROID_DOCKERFILE_HASH:0:21}
+        CACHE_KEY_WRAPPER_BASE=${{ hashFiles('libindy/ci/ubuntu.dockerfile') }}
+
+        echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
+        echo "::set-output name=RELEASE::$RELEASE"
+        echo "::set-output name=PRERELEASE::$PRERELEASE"
+
+        echo "::set-output name=CACHE_KEY_POOL::$CACHE_KEY_POOL"
+        echo "::set-output name=CACHE_KEY_LIBINDY::$CACHE_KEY_LIBINDY"
+        echo "::set-output name=CACHE_KEY_WRAPPERS_BASE::$CACHE_KEY_WRAPPER_BASE"
+        echo "::set-output name=CACHE_KEY_ANDROID::$CACHE_KEY_ANDROID"
+        echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$CACHE_KEY_POOL"
+        echo "::set-output name=DOCKER_IMG_NAME_LIBINDY::libindy:$CACHE_KEY_LIBINDY"
+        echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android:$CACHE_KEY_ANDROID"
+        echo "::set-output name=DOCKER_IMG_NAME_WRAPPER_BASE::wrapper-base:$CACHE_KEY_WRAPPER_BASE"
+      shell: bash
