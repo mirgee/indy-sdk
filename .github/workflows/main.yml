@@ -953,7 +953,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Build iOS wrapper
       run: |
-          LIBINDY_POD_VERSION=${{ env.PUBLISH_VERSION }} RUST_VER=${{ env.RUST_VER }} ./ci/ios-build.sh libindy aarch64-apple-ios x86_64-apple-ios
+          LIBINDY_POD_VERSION=${{ env.PUBLISH_VERSION }} RUST_VER=${{ env.RUST_VER }} ./ci/ga-ios-build.sh libindy aarch64-apple-ios x86_64-apple-ios
     - uses: actions/upload-artifact@v2
       with:
         name: libindy-ios-${{ env.PUBLISH_VERSION }}-universal
