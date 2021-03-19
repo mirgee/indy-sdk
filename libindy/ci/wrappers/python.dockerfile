@@ -6,15 +6,13 @@ USER root
 RUN apt-get update && \
     apt-get install -y \
       python3.5 \
-      python3-pip \
       python-setuptools
 
-RUN pip3 install -U \
-	pip \
+RUN curl -fsSL -o- https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3.5
+
+RUN pip install -U \
 	setuptools \
 	virtualenv \
 	twine==1.15.0 \
 	plumbum==1.6.7 six==1.12.0 \
 	deb-pkg-tools
-
-USER indy
