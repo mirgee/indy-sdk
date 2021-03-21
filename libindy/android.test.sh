@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 
 WORKDIR=${PWD}
 LIBINDY_WORKDIR=${WORKDIR}

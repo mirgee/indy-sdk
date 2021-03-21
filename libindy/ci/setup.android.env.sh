@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 
 
 if [ -z "${ANDROID_BUILD_FOLDER}" ]; then
@@ -49,7 +50,7 @@ delete_existing_avd(){
 }
 
 download_emulator() {
-    curl -o emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+    curl -o /root/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 create_avd(){
@@ -67,7 +68,7 @@ create_avd(){
                 "system-images;android-24;default;${ABI}"
 
         # TODO hack to downgrade Android Emulator. Should be removed as soon as headless mode will be fixed.
-        mv /home/indy/emu.zip emu.zip
+        mv /root/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
         rm emu.zip
