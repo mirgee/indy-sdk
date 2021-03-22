@@ -119,9 +119,9 @@ jobs:
           PYTHON_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/wrappers/python.dockerfile') }}
 
           LIBINDY_HASH=${LIBINDY_SOURCE_HASH:0:11}-${LIBNULLPAY_SOURCE_HASH:0:11}-${POSTGRES_SOURCE_HASH:0:11}-${ALPINE_DOCKERFILE_HASH:0:11}
-          ANDROID_HASH=${LIBINDY_SOURCE_HASH:0:22}-${JAVA_WRAPPER_HASH:0:22}-${ANDROID_DOCKERFILE_HASH:0:22}
-          PYTHON_HASH=${LIBINDY_SOURCE_HASH:0:22}-${PYTHON_WRAPPER_HASH:0:22}-${PYTHON_DOCKERFILE_HASH:0:22}
-          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:22}-${LIBINDY_SOURCE_HASH:0:22}
+          ANDROID_HASH=${ANDROID_DOCKERFILE_HASH:0:22}
+          PYTHON_HASH=${PYTHON_DOCKERFILE_HASH:0:22}
+          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:22}
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
@@ -600,20 +600,6 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
-      - name: Load indypool image
-        id: load-cached-pool-image
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_POOL }}
-      - name: If no cached image found
-        if: steps.load-cached-pool-image.outputs.cache-hit != 'true'
-        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_POOL"; exit -1
-      - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_indypool.rar
-      - name: Verify pool image was loaded
-        run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
       - name: Load android wrapper image
         id: load-android-image
         uses: actions/cache@v2
@@ -628,6 +614,26 @@ jobs:
       - name: Verify android image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+      # NOTE: This is done because currently, the android image is too large to be loaded along with indypool and the archives,
+      # but can be loaded  by itself and the archive
+      - name: Remove archived android image
+        run: rm /tmp/imgcache/img_android.rar
+      - name: Load indypool image
+        id: load-cached-pool-image
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_POOL }}
+      - name: If no cached image found
+        if: steps.load-cached-pool-image.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_POOL"; exit -1
+      - name: Load image from cache
+        run: docker load < /tmp/imgcache/img_indypool.rar
+      - name: Verify pool image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
+      - name: Remove archived indypool image
+        run: rm /tmp/imgcache/img_indypool.rar
       - name: Run wrapper tests
         run: |
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
@@ -652,20 +658,6 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
-      - name: Load indypool image
-        id: load-cached-pool-image
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_POOL }}
-      - name: If no cached image found
-        if: steps.load-cached-pool-image.outputs.cache-hit != 'true'
-        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_POOL"; exit -1
-      - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_indypool.rar
-      - name: Verify pool image was loaded
-        run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
       - name: Load android wrapper image
         id: load-android-image
         uses: actions/cache@v2
@@ -680,6 +672,24 @@ jobs:
       - name: Verify android image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+      - name: Remove archived android image
+        run: rm /tmp/imgcache/img_android.rar
+      - name: Load indypool image
+        id: load-cached-pool-image
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_POOL }}
+      - name: If no cached image found
+        if: steps.load-cached-pool-image.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_POOL"; exit -1
+      - name: Load image from cache
+        run: docker load < /tmp/imgcache/img_indypool.rar
+      - name: Verify pool image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
+      - name: Remove archived indypool image
+        run: rm /tmp/imgcache/img_indypool.rar
       - name: Run wrapper tests
         run: |
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"

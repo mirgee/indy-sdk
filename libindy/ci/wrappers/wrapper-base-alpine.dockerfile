@@ -1,5 +1,5 @@
 # TODO: Try alpine for wrapper images
-FROM alpine:edge
+FROM alpine:3.12
 
 ARG INDYSDK_PATH=/home/indy/indy-sdk
 ARG RUST_VER=1.46.0
@@ -9,7 +9,6 @@ RUN apk update && apk upgrade && \
     apk add --no-cache \
         build-base \
         cargo \
-        git \
         libsodium-dev \
         libzmq \
         openssl-dev \
@@ -17,14 +16,14 @@ RUN apk update && apk upgrade && \
         bash \
         curl
 
-RUN cargo install cargo-deb cargo-bump
+RUN cargo install cargo-bump
 
 WORKDIR /root
 
 COPY --chown=indy:indy libindy indy-sdk/libindy
 COPY --chown=indy:indy wrappers indy-sdk/wrappers
-COPY --chown=indy:indy experimental indy-sdk/experimental
-COPY --chown=indy:indy libnullpay indy-sdk/libnullpay
+# COPY --chown=indy:indy experimental indy-sdk/experimental
+# COPY --chown=indy:indy libnullpay indy-sdk/libnullpay
 
 ARG INDYSDK_PATH=/root/indy-sdk
 
