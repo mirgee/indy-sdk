@@ -119,9 +119,9 @@ jobs:
           PYTHON_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/wrappers/python.dockerfile') }}
 
           LIBINDY_HASH=${LIBINDY_SOURCE_HASH:0:11}-${LIBNULLPAY_SOURCE_HASH:0:11}-${POSTGRES_SOURCE_HASH:0:11}-${ALPINE_DOCKERFILE_HASH:0:11}
-          ANDROID_HASH=${ANDROID_DOCKERFILE_HASH:0:22}
-          PYTHON_HASH=${PYTHON_DOCKERFILE_HASH:0:22}
-          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:22}
+          ANDROID_HASH=${LIBINDY_SOURCE_HASH:0:22}-${JAVA_WRAPPER_HASH:0:22}-${ANDROID_DOCKERFILE_HASH:0:22}
+          PYTHON_HASH=${LIBINDY_SOURCE_HASH:0:22}-${PYTHON_WRAPPER_HASH:0:22}-${PYTHON_DOCKERFILE_HASH:0:22}
+          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:22}-${LIBINDY_SOURCE_HASH:0:22}
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
@@ -234,7 +234,7 @@ jobs:
         if: steps.cache-image-wrapper-base.outputs.cache-hit != 'true'
         run: |
           docker build --build-arg "RUST_VER=${{ env.RUST_VER }}" \
-                       -f libindy/ci/wrappers/wrapper-base-alpine.dockerfile \
+                       -f libindy/ci/wrappers/wrapper-base.dockerfile \
                        -t "$DOCKER_IMG_NAME_WRAPPER_BASE" \
                         .
           mkdir -p /tmp/imgcache
@@ -283,7 +283,7 @@ jobs:
         if: steps.cache-image-libindy.outputs.cache-hit != 'true'
         run: |
           docker build --build-arg "WRAPPER_BASE_IMAGE=${{ env.DOCKER_IMG_NAME_WRAPPER_BASE }}" \
-                       -f libindy/ci/wrappers/android-alpine.dockerfile \
+                       -f libindy/ci/wrappers/android.dockerfile \
                        -t "$DOCKER_IMG_NAME_ANDROID" \
                         libindy/ci
           mkdir -p /tmp/imgcache
@@ -334,7 +334,7 @@ jobs:
         if: steps.cache-image-python.outputs.cache-hit != 'true'
         run: |
           docker build --build-arg "WRAPPER_BASE_IMAGE=${{ env.DOCKER_IMG_NAME_WRAPPER_BASE }}" \
-                       -f libindy/ci/wrappers/python-alpine.dockerfile \
+                       -f libindy/ci/wrappers/python.dockerfile \
                        -t "$DOCKER_IMG_NAME_PYTHON" \
                         libindy/ci
           mkdir -p /tmp/imgcache
@@ -824,7 +824,7 @@ jobs:
           docker run --rm -i -v $PWD:/root/indy-sdk --name python-test --network host $DOCKER_IMG_NAME_PYTHON \
                               bash -c '(cd $HOME/indy-sdk/wrappers/python && \
                                 pip install --user -e .[test] && \
-                                RUST_LOG=indy=debug python3 -m pytest)'
+                                RUST_LOG=indy=debug python3.5 -m pytest)'
 
 #   publish-python-wrapper:
 #     runs-on: ubuntu-latest

@@ -6,7 +6,9 @@ RUN apt-get update && apt-get install openjdk-8-jdk -y
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 RUN apt-get update && apt-get install -y \
     maven \
-    unzip
+    unzip \
+    python3 \
+    jq
 # USER indy
 
 ENV ANDROID_BUILD_FOLDER=/tmp/android_build
