@@ -634,12 +634,12 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
       - name: Remove archived indypool image
         run: rm /tmp/imgcache/img_indypool.rar
-      - name: Run wrapper tests
-        run: |
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -i -v $PWD:/root/indy-sdk --name android --network host $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/indy-sdk/libindy/ci/ && ./android.prepare.sh ${{ env.DEVICE_ABI }} && cd $HOME/indy-sdk/libindy && ./android.test.sh ${{ env.DEVICE_ABI }})'
+      - name: Run tests for ${{ env.DEVICE_ABI }} architecture
+        uses: ./.github/actions/build-android
+        with:
+          abi: ${{ env.DEVICE_ABI }}
+          android-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
+          pool-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
 
   test-android-wrapper-armv7:
     runs-on: ubuntu-latest
@@ -696,6 +696,12 @@ jobs:
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -i -v $PWD:/root/indy-sdk --name android --network host $DOCKER_IMG_NAME_ANDROID \
                               bash -c '(cd $HOME/indy-sdk/libindy/ci/ && ./android.prepare.sh ${{ env.DEVICE_ABI }} && cd $HOME/indy-sdk/libindy && ./android.test.sh ${{ env.DEVICE_ABI }})'
+      - name: Run tests for ${{ env.DEVICE_ABI }} architecture
+        uses: ./.github/actions/build-android
+        with:
+          abi: ${{ env.DEVICE_ABI }}
+          android-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
+          pool-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
 
 #   publish-android-wrapper-device:
 #     runs-on: ubuntu-latest
@@ -778,8 +784,8 @@ jobs:
 #         with:
 #           name: ${{ env.FULL_VERSION_NAME }}
 #           path: /tmp/artifacts/libindy/${{ env.FULL_VERSION_NAME }}.zip
-# 
-# 
+ 
+ 
   ####################################################
   # PYTHON WRAPPER
   ####################################################

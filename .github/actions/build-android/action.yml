@@ -1,0 +1,30 @@
+name: 'Publish android image'
+
+inputs:
+  abi: 
+    description: 'ABI to run tests for'
+    default: 'armv7 arm64 x86 x86_64'
+  android-docker-img-name: 
+    description: 'Name of the android image'
+    required: true
+  pool-docker-img-name: 
+    description: 'Name of the pool image'
+    required: true
+
+env:
+  DOCKER_BUILDKIT: 1
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run wrapper tests
+      run: |
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+        sleep 15 && docker rmi ${{ inputs.pool-docker-img-name }} {{ inputs.android-docker-img-name }} &
+        docker run --rm -d --name indypool --network host ${{ inputs.pool-docker-img-name }}
+        docker run --rm -i --name android --network host -v $PWD:/root/indy-sdk \
+                            -e ABI="${{ inputs.abi }}" \
+                            ${{ inputs.android-docker-img-name }} \
+                            bash -c '(cd $HOME/indy-sdk/libindy/ci/ && ./android.prepare.sh $ABI && cd $HOME/indy-sdk/libindy && ./android.test.sh $ABI)'
+
+      shell: bash

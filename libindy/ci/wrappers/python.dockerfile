@@ -1,8 +1,6 @@
 ARG WRAPPER_BASE_IMAGE
 FROM ${WRAPPER_BASE_IMAGE}
 
-USER root
-
 RUN apt-get update && \
     apt-get install -y \
       python3.5 \
