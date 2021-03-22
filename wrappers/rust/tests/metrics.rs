@@ -39,6 +39,7 @@
 //             .unwrap();
 // 
 //         let expected_threadpool_threads_count = [
+<<<<<<< HEAD
 //             json!({"tags":{"label":"threadpool_active_count"},"value":0}),
 //             json!({"tags":{"label":"threadpool_queued_count"},"value":0}),
 //             json!({"tags":{"label":"threadpool_panic_count"},"value":0}),
@@ -49,6 +50,18 @@
 //             json!({"tags":{"label":"opened_wallet_ids_count"},"value":0}),
 //             json!({"tags":{"label":"pending_for_import_wallets_count"},"value":0}),
 //             json!({"tags":{"label":"pending_for_open_wallets_count"},"value":0}),
+=======
+//             json!({"tags":{"label":"active"},"value":0}),
+//             json!({"tags":{"label":"queued"},"value":0}),
+//             json!({"tags":{"label":"panic"},"value":0}),
+//         ];
+// 
+//         let expected_wallet_count = [
+//             json!({"tags":{"label":"opened"},"value":0}),
+//             json!({"tags":{"label":"opened_ids"},"value":0}),
+//             json!({"tags":{"label":"pending_for_import"},"value":0}),
+//             json!({"tags":{"label":"pending_for_open"},"value":0}),
+>>>>>>> ga-workflow
 //         ];
 // 
 //         for command in &expected_threadpool_threads_count {
