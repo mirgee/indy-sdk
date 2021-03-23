@@ -120,9 +120,9 @@ jobs:
           PYTHON_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/wrappers/python.dockerfile') }}
 
           LIBINDY_HASH=${LIBINDY_SOURCE_HASH:0:11}-${LIBNULLPAY_SOURCE_HASH:0:11}-${POSTGRES_SOURCE_HASH:0:11}-${ALPINE_DOCKERFILE_HASH:0:11}
-          ANDROID_HASH=${ANDROID_DOCKERFILE_HASH:0:22}
-          PYTHON_HASH=${PYTHON_DOCKERFILE_HASH:0:22}
-          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:22}
+          ANDROID_HASH=${ANDROID_DOCKERFILE_HASH:0:31}
+          PYTHON_HASH=${PYTHON_DOCKERFILE_HASH:0:31}
+          WRAPPER_BASE_HASH=${WRAPPER_BASE_DOCKERFILE_HASH:0:31}
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
@@ -179,7 +179,6 @@ jobs:
           docker load < /tmp/imgcache/img_indypool.rar
       - name: Verify indypool image was loaded
         run: |
-          docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
 
   build-image-libindy:
@@ -212,7 +211,6 @@ jobs:
           docker load < /tmp/imgcache/img_libindy.rar
       - name: Verify libindy image was loaded
         run: |
-          docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBINDY" || { echo "Image $DOCKER_IMG_NAME_LIBINDY was not found!" ; exit 1; }
 
   build-image-wrapper-base:
@@ -245,7 +243,6 @@ jobs:
           docker load < /tmp/imgcache/img_wrapper_base.rar
       - name: Verify wrapper base image was loaded
         run: |
-          docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_WRAPPER_BASE" || { echo "Image $DOCKER_IMG_NAME_WRAPPER_BASE was not found!" ; exit 1; }
 
   build-image-android:
@@ -323,7 +320,6 @@ jobs:
         run: docker load < /tmp/imgcache/img_wrapper_base.rar
       - name: Verify base image was loaded
         run: |
-          docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_WRAPPER_BASE" || { echo "Image $DOCKER_IMG_NAME_WRAPPER_BASE was not found!" ; exit 1; }
       - name: Try load from cache.
         id: cache-image-python
@@ -345,7 +341,6 @@ jobs:
           docker load < /tmp/imgcache/img_python.rar
       - name: Verify python image was loaded
         run: |
-          docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_PYTHON" || { echo "Image $DOCKER_IMG_NAME_PYTHON was not found!" ; exit 1; }
 
   ####################################################
@@ -536,7 +531,7 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -i -v $PWD:/root/indy-sdk --name libindy --network host $DOCKER_IMG_NAME_WRAPPER_BASE \
-                              bash -c '(cd $HOME/indy-sdk/wrappers/rust && RUST_BACKTRACE=1 RUST_LOG=indy::=debug RUST_TEST_THREADS=1 cargo test --release)'
+                              bash -c '(cd $HOME/indy-sdk/wrappers/rust/indy-sys && cargo build --release && cd $HOME/indy-sdk/wrappers/rust && RUST_BACKTRACE=1 RUST_LOG=indy::=debug RUST_TEST_THREADS=1 cargo test --release)'
 
   publish-rust-wrapper:
     runs-on: ubuntu-latest
@@ -568,7 +563,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_WRAPPER_BASE" || { echo "Image $DOCKER_IMG_NAME_WRAPPER_BASE was not found!" ; exit 1; }
       - name: Publish rust wrapper to crates.io
         run: |
-          docker run --rm -i --name libindy $DOCKER_IMG_NAME_WRAPPER_BASE \
+          docker run --rm -i -v $PWD:/root/indy-sdk --name libindy $DOCKER_IMG_NAME_WRAPPER_BASE \
                               bash -c '(cd $HOME/indy-sdk/wrappers/rust/indy-sys && \
                                         cargo login ${{ secrets.CRATESIO_TOKEN }} && \
                                         cargo bump ${{ env.PUBLISH_VERSION }} && \
