@@ -10,6 +10,7 @@ on:
 
 env:
   RUST_VER: 1.45.2
+  POOL_IP: "127.0.0.1"
   DEVICE_ABIS: "arm arm64"
   EMULATOR_ABIS: "x86 x86_64"
 
@@ -113,7 +114,7 @@ jobs:
           JAVA_WRAPPER_HASH=${{ hashFiles('wrappers/java') }}
           PYTHON_WRAPPER_HASH=${{ hashFiles('wrappers/python') }}
 
-          POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile') }}
+          POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile') }}-${{ env.POOL_IP }}
           ALPINE_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/alpine.dockerfile') }}
           WRAPPER_BASE_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/wrappers/wrapper-base.dockerfile') }}
           ANDROID_DOCKERFILE_HASH=${{ hashFiles('libindy/ci/wrappers/android.dockerfile') }}
@@ -139,6 +140,7 @@ jobs:
           echo "::set-output name=DOCKER_IMG_NAME_WRAPPER_BASE::wrapper-base:$WRAPPER_BASE_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android:$ANDROID_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_PYTHON::python:$PYTHON_HASH"
+          echo ${{ env.POOL_IP }}
 
   ####################################################
   # IMAGE BUILDS
@@ -171,7 +173,7 @@ jobs:
       - name: If NOT found in cache, build and cache image.
         if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
-          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
+          docker build -t "$DOCKER_IMG_NAME_POOL" --build-arg=pool_ip=${{ env.POOL_IP }} -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
       - name: Load image from cache
@@ -433,7 +435,9 @@ jobs:
       - name: Run indy tests
         run: |
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -i --name libindy --network host $DOCKER_IMG_NAME_LIBINDY \
+          docker run --rm -i --name libindy --network host \
+                              -e TEST_POOL_IP=${{ env.POOL_IP }} \
+                              $DOCKER_IMG_NAME_LIBINDY \
                               bash -c '(cd $HOME/indy-sdk/libindy && RUST_BACKTRACE=1 RUST_LOG=indy::=debug RUST_TEST_THREADS=1 cargo test --release)'
 
   publish-libindy-image:
@@ -530,7 +534,9 @@ jobs:
         run: |
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -i -v $PWD:/root/indy-sdk --name libindy --network host $DOCKER_IMG_NAME_WRAPPER_BASE \
+          docker run --rm -i -v $PWD:/root/indy-sdk --name libindy --network host \
+                              -e TEST_POOL_IP=${{ env.POOL_IP }} \
+                              $DOCKER_IMG_NAME_WRAPPER_BASE \
                               bash -c '(cd $HOME/indy-sdk/wrappers/rust/indy-sys && cargo build --release && cd $HOME/indy-sdk/wrappers/rust && RUST_BACKTRACE=1 RUST_LOG=indy::=debug RUST_TEST_THREADS=1 cargo test --release)'
 
   publish-rust-wrapper:
@@ -690,6 +696,7 @@ jobs:
         uses: ./.github/actions/test-android
         with:
           abi: ${{ env.DEVICE_ABI }}
+          pool_ip: ${{ env.POOL_IP }}
           android-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
           pool-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
 
@@ -746,6 +753,7 @@ jobs:
         uses: ./.github/actions/test-android
         with:
           abi: ${{ env.DEVICE_ABI }}
+          pool_ip: ${{ env.POOL_IP }}
           android-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
           pool-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
 
@@ -883,10 +891,12 @@ jobs:
         run: |
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -i -v $PWD:/root/indy-sdk --name python-test --network host $DOCKER_IMG_NAME_PYTHON \
+          docker run --rm -i -v $PWD:/root/indy-sdk --name python-test --network host \
+                              -e TEST_POOL_IP="${{ env.POOL_IP }}" \
+                              $DOCKER_IMG_NAME_PYTHON \
                               bash -c '(cd $HOME/indy-sdk/wrappers/python && \
                                 pip install --user -e .[test] && \
-                                RUST_LOG=indy=debug python3.5 -m pytest)'
+                                RUST_LOG=indy=debug python3.6 -m pytest)'
 
   publish-python-wrapper:
     runs-on: ubuntu-latest
@@ -921,8 +931,8 @@ jobs:
         run: |
           docker run --rm -i --name libindy $DOCKER_IMG_NAME_PYTHON \
                               bash -c '(cd $HOME/indy-sdk/wrappers/python && \
-                              PACKAGE_VERSION=${{ env.PUBLISH_VERSION }} python3.5 setup.py sdist && \
-                              python3.5 -m twine upload dist/* -u __token__ -p ${{ secrets.PYPI_PYTHON3_INDY }})'
+                              PACKAGE_VERSION=${{ env.PUBLISH_VERSION }} python3.6 setup.py sdist && \
+                              python3.6 -m twine upload dist/* -u __token__ -p ${{ secrets.PYPI_PYTHON3_INDY }})'
 
   ####################################################
   # IOS WRAPPER

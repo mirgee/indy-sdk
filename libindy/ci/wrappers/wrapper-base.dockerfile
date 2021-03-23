@@ -9,7 +9,8 @@ RUN apt-get update && \
       cmake \
       build-essential \
       libssl-dev \
-      libzmq3-dev
+      libzmq3-dev \
+      python3-distutils
 
 RUN cd /tmp && \
    curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz | tar -xz && \

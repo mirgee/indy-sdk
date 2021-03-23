@@ -15,6 +15,12 @@ if [ -z "${TARGET_ARCH}" ]; then
     exit 1
 fi
 
+if [ -z "${TEST_POOL_IP}" ]; then
+    echo STDERR "Missing TEST_POOL_IP value"
+    echo STDERR "specify the IP the pool runs on"
+    exit 1
+fi
+
 set -e
 
 source ${CI_DIR}/setup.android.env.sh
@@ -29,7 +35,7 @@ build_test_artifacts(){
 
         set -e
 
-        cargo clean
+        # cargo clean
 
         # TODO empty for full testing SET_OF_TESTS=''
         SET_OF_TESTS='--test interaction'
@@ -88,7 +94,7 @@ execute_on_device(){
         adb -e shell "chmod 755 /data/local/tmp/$EXE_NAME"
         OUT="$(mktemp)"
         MARK="ADB_SUCCESS!"
-        time adb -e shell "TEST_POOL_IP=127.0.0.1 LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=1 RUST_LOG=debug /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
+        time adb -e shell "LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=1 RUST_LOG=debug /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
         grep $MARK $OUT
     done
 

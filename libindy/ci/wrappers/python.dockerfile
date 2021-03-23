@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install -y \
       python3.6
 
-RUN curl -fsSL -o- https://bootstrap.pypa.io/pip/3.6/get-pip.py | python3.6
+RUN curl -fsSL -o- https://bootstrap.pypa.io/pip/get-pip.py | python3.6
 
 RUN pip install -U \
 	twine==1.15.0 \

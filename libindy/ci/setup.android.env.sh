@@ -83,7 +83,9 @@ create_avd(){
                 --name ${ABSOLUTE_ARCH} \
                 --package "system-images;android-24;default;${ABI}" \
                 -f \
-                -c 32M
+                -c 1024M
+
+        adb start-server
 
         ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -no-audio -no-window -no-snapshot -no-accel &
 }
