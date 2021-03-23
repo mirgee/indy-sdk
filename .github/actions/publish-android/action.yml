@@ -19,7 +19,7 @@ runs:
   steps:
     - name: Build, run android wrapper tests, and publish artifacts
       run: |
-        docker run --name publish-android-wrapper \
+        docker run --name publish-android-wrapper -v $PWD:/root/indy-sdk \
             -e ABIS="${{ inputs.abis }}" \
             -e FULL_VERSION_NAME="${{ inputs.full-version-name }}" \
             ${{ inputs.docker-img-name }} \

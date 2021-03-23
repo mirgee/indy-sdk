@@ -11,7 +11,7 @@ export WHITE=`tput setaf 7`
 export BOLD=`tput bold`
 export RESET=`tput sgr0`
 
-set -e
+set -ex
 set -o pipefail
 WORKDIR=${PWD}
 LIBINDY_WORKDIR=${WORKDIR}

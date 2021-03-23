@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     maven \
     unzip \
     python3 \
+    python3-distutils \
     jq
 
 ENV ANDROID_BUILD_FOLDER=/tmp/android_build
