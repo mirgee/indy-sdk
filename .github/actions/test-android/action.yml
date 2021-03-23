@@ -25,7 +25,7 @@ runs:
       run: |
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         # sleep 15 && docker rmi ${{ inputs.pool-docker-img-name }} {{ inputs.android-docker-img-name }} &
-        docker run --rm -itd --name indypool --network host ${{ inputs.pool-docker-img-name }}
+        docker run --rm -d --name indypool --network host ${{ inputs.pool-docker-img-name }}
         docker run --rm -i --name android --network host -v $PWD:/root/indy-sdk \
                             -e ABI="${{ inputs.abi }}" \
                             -e TEST_POOL_IP="${{ inputs.pool_ip }}" \

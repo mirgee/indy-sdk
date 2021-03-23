@@ -23,7 +23,7 @@ runs:
             -e ABIS="${{ inputs.abis }}" \
             -e FULL_VERSION_NAME="${{ inputs.full-version-name }}" \
             ${{ inputs.docker-img-name }} \
-            bash -c '(cd /root/indy-sdk/libindy && ./android.build.sh $ABIS)'
+            bash -c '(cd $HOME/indy-sdk/libindy/ci/ && ./android.prepare.sh $ABIS && cd $HOME/indy-sdk/libindy && ./android.build.sh $ABIS)'
         docker_id=$(docker ps -a | grep android | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep android | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
         mkdir -p /tmp/artifacts

@@ -929,7 +929,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_PYTHON" || { echo "Image $DOCKER_IMG_NAME_PYTHON was not found!" ; exit 1; }
       - name: Publish Python wrapper
         run: |
-          docker run --rm -i --name libindy $DOCKER_IMG_NAME_PYTHON \
+          docker run --rm -i -v $PWD:/root/indy-sdk --name libindy $DOCKER_IMG_NAME_PYTHON \
                               bash -c '(cd $HOME/indy-sdk/wrappers/python && \
                               PACKAGE_VERSION=${{ env.PUBLISH_VERSION }} python3.6 setup.py sdist && \
                               python3.6 -m twine upload dist/* -u __token__ -p ${{ secrets.PYPI_PYTHON3_INDY }})'
