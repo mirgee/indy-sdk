@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     python3 \
     python3-distutils \
+    zip \
     jq
 
 ENV ANDROID_BUILD_FOLDER=/tmp/android_build

@@ -576,11 +576,13 @@ jobs:
                                         cargo package --allow-dirty && \
                                         cargo publish --allow-dirty && \
                                         cd .. && \
-                                        sed -i -E "s/indy-sys = \{ path =\"indy-sys\", version = \"=([0-9,.]+)\" \}/indy-sys = \{ path =\"indy-sys\", version = \"${{ env.PUBLISH_VERSION }}\" \}/g" Cargo.toml && \
+                                        sed -i -E "s/indy-sys = \{ path =\"indy-sys\", version = \"=([0-9,.]+)\" \}/indy-sys = \{ path =\"indy-sys\", version = \"=${{ env.PUBLISH_VERSION }}\" \}/g" Cargo.toml && \
                                         cargo bump ${{ env.PUBLISH_VERSION }} && \
+                                        sleep 10 && \
+                                        cargo update && \
                                         cargo package --allow-dirty && \
                                         cargo publish --allow-dirty)'
-
+  
   ####################################################
   # ANDROID WRAPPER
   ####################################################
@@ -642,7 +644,7 @@ jobs:
 #           abi: ${{ env.DEVICE_ABI }}
 #           android-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
 #           pool-docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
-
+ 
   test-android-wrapper-armv7:
     runs-on: ubuntu-latest
     needs: 
